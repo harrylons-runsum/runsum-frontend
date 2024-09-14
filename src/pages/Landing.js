@@ -24,16 +24,13 @@ class Landing extends Component {
     }
 
     async getToken(codeValue) {
-        const tokenPayload = {
-            client_id: process.env.REACT_APP_CLIENT_ID,
-            client_secret: process.env.REACT_APP_CLIENT_SECRET,
+        let payload = {
             code: codeValue,
-            grant_type: 'authorization_code'
-        };
-
-        return fetch('https://www.strava.com/oauth/token', {
+        }
+        let endpointURL = process.env.REACT_APP_BACKEND_URL + '/get-token';
+        return fetch(endpointURL, {
             method: 'POST',
-            body: JSON.stringify(tokenPayload),
+            body: JSON.stringify(payload),
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json'
@@ -124,7 +121,7 @@ class Landing extends Component {
                 ) : (
                     <div className='picker-container'>
                         <p>Choose dates to calculate summary statistics. </p>
-                        <p>Enter as MM/DD/YYYY or select from the picker</p>
+                        <p>Enter as MM/DD/YYYY or select from the pickers</p>
                         <p style={{ marginBottom: 5 }}>Start Date:</p>
                         <DatePicker placeholderText='MM/DD/YYYY' selected={startDate} onChange={(date) => this.setStartDate(date)} value={startDate} selectsStart startDate={startDate} endDate={endDate} maxDate={new Date()} />
                         <p style={{ marginBottom: 5 }}>End Date:</p>

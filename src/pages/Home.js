@@ -10,7 +10,6 @@ function Home(props) {
     }
     let to = "https://www.strava.com/oauth/authorize?client_id=" + CLIENT_ID + "&redirect_uri=" + CALLBACK_DOMAIN + "/landing&response_type=code&scope=activity:read_all";
     console.log(to);
-    // to = "https://www.strava.com/oauth/authorize?client_id=122238&redirect_uri=http://localhost:3010/landing&response_type=code&scope=activity:read_all"
     
 
 
