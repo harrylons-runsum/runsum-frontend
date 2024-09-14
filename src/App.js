@@ -1,23 +1,29 @@
-import logo from './logo.svg';
-import './App.css';
+import './App.scss';
+import { Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Footer from './pages/std/footer';
+import Landing from './pages/Landing';
+import NeedLogin from './pages/needLogin';
 
+function logout(){
+  console.log('logging out');
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  window.location.href = '/';
+}
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/landing" element={<Landing 
+            logout={logout}/>}
+         />
+         <Route path="/needlogin" element={<NeedLogin/>} />
+      </Routes>
+      <Footer />  {/* Place Footer outside of Routes to appear on every page */}
     </div>
   );
 }
