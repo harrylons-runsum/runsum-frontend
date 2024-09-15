@@ -23,7 +23,7 @@ class Landing extends Component {
         });
     }
 
-    async getToken(codeValue) {
+    async getTokenFromCode(codeValue) {
         let payload = {
             code: codeValue,
         }
@@ -35,6 +35,7 @@ class Landing extends Component {
                 'Content-Type': 'application/json',
                 Accept: 'application/json'
             }
+            
         })
             .then(response => {
                 if (!response.ok) {
@@ -44,7 +45,6 @@ class Landing extends Component {
             })
             .then(data => {
                 // Handle successful response data
-                console.log('Token exchange successful:', data);
                 return data;
             })
             .catch(error => {
@@ -53,38 +53,60 @@ class Landing extends Component {
             });
     }
 
+    updateToken(){
+        let payload = {}
+        let endpointURL = process.env.REACT_APP_BACKEND_URL + '/refresh-token';
+        return fetch(endpointURL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            credentials: 'include' // include cookie
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json(); // Parse response body as JSON
+            })
+            .then(data => {
+                console.log(data);
+                // Handle successful response data
+                return data;
+            })
+            .catch(error => {
+                // Handle errors
+                console.error('Error during getting new token:', error);
+            });
+
+    }
+
     async componentDidMount() {
         try {
-            // Check if we already have a token for this user
-            let token = localStorage.getItem("accessToken");
-            console.log("token:", token);
-            if (!token) {
-                console.log("No token found. Checking params.");
-                const searchParams = new URLSearchParams(window.location.search);
-                if (searchParams.has('code')) {
-                    const codeValue = searchParams.get('code');
-                    console.log('Code:', codeValue);
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.has('code')) {
+                const codeValue = searchParams.get('code');
+                console.log('Code:', codeValue);
 
-                    this.getToken(codeValue).then(data => {
-                        if (data) {
-                            localStorage.setItem("accessToken", data.access_token);
-                            localStorage.setItem("refreshToken", data.refresh_token);
-                            // localStorage.setItem("id",data.id);
-                            console.log('Token saved:', data.access_token);
-                        } else {
-                            console.error('Failed to get token');
-                        }
-                    });
-                }
-                else {
-                    // if no token and no code, redirect user back to login page. 
-                    window.location.href = '/needlogin';
-                }
+                this.getTokenFromCode(codeValue).then(data => {
+                    if (data && data['access_token']) {
+                        // change access token
+                        this.props.setAccessToken(data['access_token']);
+                        console.log(data);
+                    } else {
+                        console.error('Failed to get token');
+                    }
+                });
             }
-            this.setState({ data: { message: 'Data loaded' } });
+            else {
+                // TODO handle no code
+                this.updateToken();
+            }
         } catch (error) {
             console.error('Error generating client:', error);
-            window.location('/');
+            // window.location.href = '/';
         } finally {
             this.setState({ loading: false });
         }
@@ -92,10 +114,14 @@ class Landing extends Component {
 
     handleContinue = () => {
         if (!(this.state.startDate && this.state.endDate)) {
-            this.state.enterBothWarning = true;
+            this.setState({ enterBothWarning: true });
+            console.log('WARNING: enter both dates');
         }
         else {
-            // continue to the results
+            console.log('both entered');
+            localStorage.setItem('startDate', this.state.startDate);
+            localStorage.setItem('endDate', this.state.endDate);
+            window.location.href = '/results';
         }
     };
 
@@ -109,7 +135,7 @@ class Landing extends Component {
 
 
     render() {
-        const { loading, data, startDate, endDate } = this.state;
+        const { loading, data, startDate, endDate, enterBothWarning } = this.state;
 
         return (
             <div className="landing-page">
@@ -126,6 +152,9 @@ class Landing extends Component {
                         <DatePicker placeholderText='MM/DD/YYYY' selected={startDate} onChange={(date) => this.setStartDate(date)} value={startDate} selectsStart startDate={startDate} endDate={endDate} maxDate={new Date()} />
                         <p style={{ marginBottom: 5 }}>End Date:</p>
                         <DatePicker placeholderText='MM/DD/YYYY' selected={endDate} onChange={(date) => this.setEndDate(date)} value={endDate} selectsEnd startDate={startDate} endDate={endDate} maxDate={new Date()} />
+                        {enterBothWarning && (
+                            <div style={{ color: '#648c94' }}><p>Enter both start and end date</p></div>
+                        )}
                         <Button className='logout' onClick={this.handleContinue}>Continue</Button>
                         <Button className='logout' onClick={this.handleLogout}>Log out</Button>
                     </div>

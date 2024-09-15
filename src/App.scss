@@ -46,6 +46,7 @@ $eagle: #B3BAA0;
       color: $juniper;
     }
   }
+
   .login {
     margin-top: 20px;
     color: $juniper;
@@ -96,10 +97,31 @@ $eagle: #B3BAA0;
     padding: 12px;
     font-size: 20px;
     align-items: center;
+
     .logout {
       margin-top: 20px;
       color: $juniper;
       border: 1px solid $eagle;
+    }
+  }
+}
+
+.results-page {
+  justify-content: center;
+
+  .content-container {
+
+    .buttons-container {
+      align-items: center;
+      display: flex;
+      flex-direction: row;
+      padding: 20px;
+
+      .actionButtons {
+        margin: 20px;
+        color: $juniper;
+        border: 1px solid $eagle;
+      }
     }
   }
 }

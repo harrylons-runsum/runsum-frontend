@@ -15,8 +15,8 @@ class About extends Component {
                 </div>
                 <div className='about-break' />
                 <div className='about-description'>
-                    <p>You need to log back in before viewing this page! </p> 
-                    <p>If you keep seeing this page and think you shouldn't, reach out to us.</p>
+                    <p>You need to log back into your strava account before viewing this page! </p> 
+                    <p>If you keep seeing this page after recently logging in, reach out to us.</p>
                 </div>
                 <Button className='login' onClick={this.handleLoginClick}>Go back to login</Button>
 
