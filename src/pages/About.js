@@ -1,4 +1,5 @@
-
+import Button from '@mui/material/Button';
+import { Link } from 'react-router-dom';
 
 function About(props) {
     return (
@@ -20,6 +21,7 @@ function About(props) {
                 Check out the <a href='https://www.youtube.com' target='_blank' rel='noreferrer'>Demo Video</a> on YouTube
                 or <a href='/'>try RunSum for yourself!</a>
             </div>
+            <Button className='logout' component={Link} to={'/'}>Go back to home</Button>
         </div>
     );
 }

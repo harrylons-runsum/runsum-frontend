@@ -34,7 +34,8 @@ class Landing extends Component {
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json'
-            }
+            },
+            credentials: 'include' // include cookie
             
         })
             .then(response => {
@@ -153,7 +154,7 @@ class Landing extends Component {
                         <p style={{ marginBottom: 5 }}>End Date:</p>
                         <DatePicker placeholderText='MM/DD/YYYY' selected={endDate} onChange={(date) => this.setEndDate(date)} value={endDate} selectsEnd startDate={startDate} endDate={endDate} maxDate={new Date()} />
                         {enterBothWarning && (
-                            <div style={{ color: '#648c94' }}><p>Enter both start and end date</p></div>
+                            <div style={{ color: '#B3BAA0' }}><p>Enter both start and end dates</p></div>
                         )}
                         <Button className='logout' onClick={this.handleContinue}>Continue</Button>
                         <Button className='logout' onClick={this.handleLogout}>Log out</Button>
