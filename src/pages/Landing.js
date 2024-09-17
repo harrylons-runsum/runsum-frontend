@@ -89,6 +89,7 @@ class Landing extends Component {
     }
 
     async componentDidMount() {
+        console.log('requesting from ',process.env.REACT_APP_BACKEND_URL);
         try {
             const searchParams = new URLSearchParams(window.location.search);
 
