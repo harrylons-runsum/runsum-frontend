@@ -105,7 +105,7 @@ class Landing extends Component {
                     // Code failed. try to update token from existing
                     const tokenRefreshResult = await this.updateToken();
                     if (!(tokenRefreshResult && tokenRefreshResult['access_token'])) {
-                        console.err("token for token unsuccessful. redirecting to needlogin");
+                        console.error("token for token unsuccessful. redirecting to needlogin");
                         this.setState({ redirectToNeedLogin: true });
                     }
                     else {
@@ -117,7 +117,7 @@ class Landing extends Component {
                 // handle no code case. try to update token from existing
                 const tokenRefreshResult = await this.updateToken();
                 if (!(tokenRefreshResult && tokenRefreshResult['access_token'])) {
-                    console.err("token for token unsuccessful. redirecting to needlogin");
+                    console.error("token for token unsuccessful. redirecting to needlogin");
                     this.setState({ redirectToNeedLogin: true });
                 }
                 else {
@@ -167,7 +167,7 @@ class Landing extends Component {
                 this.updateToken();
             }
             catch (e) {
-                console.err('Couldn\'t refresh token on render. redirecting');
+                console.error('Couldn\'t refresh token on render. redirecting');
                 this.setState({redirectToNeedLogin: true});
             }
             return <Navigate to="/results" />;
