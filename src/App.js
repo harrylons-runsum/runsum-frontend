@@ -13,9 +13,15 @@ class App extends Component {
     accessToken : "",
   };
   setAccessToken = (newToken) => {
-    console.log("setting access token");
-    this.setState({accessToken: newToken});
+    console.log("setting access token", newToken);
+    this.setState({ accessToken: newToken }, () => {
+      console.log("updated state:", this.state.accessToken);
+    });
   };
+  getAccessToken = () => {
+    console.log(this.state.accessToken);
+    return this.state.accessToken;
+  }
   // Method for handling logout
   logout = () => {
     console.log('logging out');
@@ -35,12 +41,12 @@ class App extends Component {
           <Route path="/about" element={<About />} />
           <Route
             path="/landing"
-            element={<Landing logout={this.logout} setAccessToken={this.setAccessToken} accessToken={accessToken}/>}
+            element={<Landing logout={this.logout} setAccessToken={this.setAccessToken} getAccessToken={this.getAccessToken}/>}
           />
           <Route path="/needlogin" element={<NeedLogin />} />
           <Route
             path="/results"
-            element={<Results logout={this.logout} />}
+            element={<Results logout={this.logout} getAccessToken={this.getAccessToken}/>}
           />
         </Routes>
         <Footer /> {/* Place Footer outside of Routes to appear on every page */}

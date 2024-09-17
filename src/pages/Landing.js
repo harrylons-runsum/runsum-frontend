@@ -3,6 +3,7 @@ import Button from '@mui/material/Button';
 import { ClipLoader } from 'react-spinners'; // Import the spinner from the library
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { Navigate } from 'react-router-dom';
 
 class Landing extends Component {
     state = {
@@ -11,6 +12,9 @@ class Landing extends Component {
         data: null,
         endDate: null,
         enterBothWarning: false,
+        dateOrderWarning: false,
+        redirectToResults: false,
+        redirectToNeedLogin: false,
     };
     async setStartDate(date) {
         await this.setState({
@@ -36,7 +40,7 @@ class Landing extends Component {
                 Accept: 'application/json'
             },
             credentials: 'include' // include cookie
-            
+
         })
             .then(response => {
                 if (!response.ok) {
@@ -54,7 +58,7 @@ class Landing extends Component {
             });
     }
 
-    updateToken(){
+    async updateToken() {
         let payload = {}
         let endpointURL = process.env.REACT_APP_BACKEND_URL + '/refresh-token';
         return fetch(endpointURL, {
@@ -87,31 +91,46 @@ class Landing extends Component {
     async componentDidMount() {
         try {
             const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.has('code')) {
-                const codeValue = searchParams.get('code');
-                console.log('Code:', codeValue);
 
-                this.getTokenFromCode(codeValue).then(data => {
-                    if (data && data['access_token']) {
-                        // change access token
-                        this.props.setAccessToken(data['access_token']);
-                        console.log(data);
-                    } else {
-                        console.error('Failed to get token');
+            if (searchParams.has('code')) {
+                const data = await this.getTokenFromCode(searchParams.get('code'));
+                if (data && data['access_token']) {
+                    // successful code for token exchange
+                    this.props.setAccessToken(data['access_token']);
+                    console.log(data);
+                    console.log(this.props.getAccessToken());
+                } else {
+                    console.error('No token in response');
+                    // Code failed. try to update token from existing
+                    const tokenRefreshResult = await this.updateToken();
+                    if (!(tokenRefreshResult && tokenRefreshResult['access_token'])) {
+                        console.err("token for token unsuccessful. redirecting to needlogin");
+                        this.setState({ redirectToNeedLogin: true });
                     }
-                });
-            }
-            else {
-                // TODO handle no code
-                this.updateToken();
+                    else {
+                        console.log("token for token successful");
+                        this.props.setAccessToken(tokenRefreshResult['access_token']);
+                    }
+                }
+            } else {
+                // handle no code case. try to update token from existing
+                const tokenRefreshResult = await this.updateToken();
+                if (!(tokenRefreshResult && tokenRefreshResult['access_token'])) {
+                    console.err("token for token unsuccessful. redirecting to needlogin");
+                    this.setState({ redirectToNeedLogin: true });
+                }
+                else {
+                    console.log("token for token successful");
+                    this.props.setAccessToken(tokenRefreshResult['access_token']);
+                }
             }
         } catch (error) {
             console.error('Error generating client:', error);
-            // window.location.href = '/';
         } finally {
             this.setState({ loading: false });
         }
     }
+
 
     handleContinue = () => {
         if (!(this.state.startDate && this.state.endDate)) {
@@ -119,10 +138,17 @@ class Landing extends Component {
             console.log('WARNING: enter both dates');
         }
         else {
-            console.log('both entered');
-            localStorage.setItem('startDate', this.state.startDate);
-            localStorage.setItem('endDate', this.state.endDate);
-            window.location.href = '/results';
+            if (this.state.startDate >= this.state.endDate) {
+                this.setState({ enterBothWarning: false });
+                this.setState({ dateOrderWarning: true });
+                console.log('WARNING: wrong date order');
+            }
+            else {
+                console.log('both entered');
+                localStorage.setItem('startDate', this.state.startDate);
+                localStorage.setItem('endDate', this.state.endDate);
+                this.setState({ redirectToResults: true });
+            }
         }
     };
 
@@ -133,17 +159,30 @@ class Landing extends Component {
         }
     };
 
-
-
     render() {
-        const { loading, data, startDate, endDate, enterBothWarning } = this.state;
+        if (this.state.redirectToResults) {
+            // update access token again
+            try {
+                this.updateToken();
+            }
+            catch (e) {
+                console.err('Couldn\'t refresh token on render. redirecting');
+                this.setState({redirectToNeedLogin: true});
+            }
+            return <Navigate to="/results" />;
+        }
+        else if (this.state.redirectToNeedLogin) {
+            return <Navigate to="/needlogin" />;
+        }
+        const { loading, data, startDate, endDate, enterBothWarning, dateOrderWarning } = this.state;
 
         return (
+
             <div className="landing-page">
                 {loading ? (
                     <div className="spinner-container">
                         <ClipLoader color="#3498db" loading={loading} size={60} />
-                        <p>Validating login...</p>
+                        <p color='#ffffff'>Validating login...</p>
                     </div>
                 ) : (
                     <div className='picker-container'>
@@ -151,12 +190,25 @@ class Landing extends Component {
                         <p>Enter as MM/DD/YYYY or select from the pickers</p>
                         <p style={{ marginBottom: 5 }}>Start Date:</p>
                         <DatePicker placeholderText='MM/DD/YYYY' selected={startDate} onChange={(date) => this.setStartDate(date)} value={startDate} selectsStart startDate={startDate} endDate={endDate} maxDate={new Date()} />
-                        <p style={{ marginBottom: 5 }}>End Date:</p>
-                        <DatePicker placeholderText='MM/DD/YYYY' selected={endDate} onChange={(date) => this.setEndDate(date)} value={endDate} selectsEnd startDate={startDate} endDate={endDate} maxDate={new Date()} />
+                        {startDate &&
+                            (
+                                <div>
+                                    <p style={{ marginBottom: 5 }}>End Date:</p>
+                                    <DatePicker placeholderText='MM/DD/YYYY' selected={endDate} onChange={(date) => this.setEndDate(date)} value={endDate} selectsEnd startDate={startDate} endDate={endDate} minDate={startDate} maxDate={new Date()} />
+                                </div>
+                            )
+                        }
                         {enterBothWarning && (
                             <div style={{ color: '#B3BAA0' }}><p>Enter both start and end dates</p></div>
                         )}
-                        <Button className='logout' onClick={this.handleContinue}>Continue</Button>
+                        {dateOrderWarning && (
+                            <div style={{ color: '#B3BAA0' }}><p>End date must be at least 1 day after start date</p></div>
+                        )}
+                        {(startDate && endDate) &&
+                            (
+                                <Button className='logout' onClick={this.handleContinue}>Continue</Button>
+                            )
+                        }
                         <Button className='logout' onClick={this.handleLogout}>Log out</Button>
                     </div>
                 )}

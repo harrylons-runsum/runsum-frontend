@@ -33,13 +33,12 @@ $eagle: #B3BAA0;
     background: $juniper;
     border-radius: 1px;
     margin-bottom: 10px;
-
   }
 
   .about-description {
     font-family: 'Roboto', sans-serif;
     color: #d0d6d8;
-    padding: 12px;
+    padding: 15px;
     font-size: 20px;
 
     & a {
@@ -110,6 +109,9 @@ $eagle: #B3BAA0;
   justify-content: center;
 
   .content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 
     .buttons-container {
       align-items: center;
