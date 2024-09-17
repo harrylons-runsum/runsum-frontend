@@ -111,7 +111,7 @@ class Results extends Component {
                 {loading ? (
                     <div className="spinner-container">
                         <ClipLoader color="#3498db" loading={loading} size={60} />
-                        <p color='#ffffff'>Loading your activities. This may take a minute if you selected a large time range.</p>
+                        <p style={{ color: '#FFFFFF' }}>Loading your activities. This may take a minute if you selected a large time range.</p>
                     </div>
                 ) : (
                     <div className='content-container'>
@@ -121,18 +121,18 @@ class Results extends Component {
                             <this.StyledTab label="Bike" />
                             <this.StyledTab label="Swim" />
                         </this.StyledTabs>
-                        <Typography color='#c0c8d0' sx={{ margin: 2 }}>From {startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} to {endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}:</Typography>
+                        <Typography color='#c0c8d0' sx={{ mt: 2 }}>From {startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} to {endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}:</Typography>
                         {currentTab === 0 && (
-                            <p style={{ color: '#FFFFFF' }}><AllSportsResults data={data['allSports']} /></p>
+                            <AllSportsResults data={data['allSports']} />
                         )}
                         {currentTab === 1 && (
-                            <p style={{ color: '#FFFFFF' }}><RunResults /></p>
+                            <RunResults />
                         )}
                         {currentTab === 2 && (
-                            <p style={{ color: '#FFFFFF' }}><BikeResults /></p>
+                            <BikeResults />
                         )}
                         {currentTab === 3 && (
-                            <p style={{ color: '#FFFFFF' }}><SwimResults /></p>
+                            <SwimResults />
                         )}
                         <div className='buttons-container'>
                             <Button className='actionButtons' onClick={this.handleNewTimeRange}>New Time Range</Button>

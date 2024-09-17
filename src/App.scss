@@ -113,6 +113,29 @@ $eagle: #B3BAA0;
     flex-direction: column;
     align-items: center;
 
+    .stats-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .section-header {
+        color: $eagle;
+        font-family: 'Merriweather', serif;
+        font-size: 40px;
+        text-align: center;
+        padding: 10px;
+        margin-top: 10px;
+      }
+
+      .section-break {
+        height: 1px;
+        width: 60%;
+        background: $juniper;
+        border-radius: 1px;
+        margin-bottom: 20px;
+      }
+    }
+
     .buttons-container {
       align-items: center;
       display: flex;
