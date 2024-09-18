@@ -209,7 +209,6 @@ export async function getAllInfo(accessToken) {
                 console.log("all done");
                 hasMore = false; // No more activities to fetch
             }
-            if (page >= 5) { break; }
         }
 
         // Handle or return the collected activities

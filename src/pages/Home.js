@@ -1,5 +1,6 @@
 
 import Button from '@mui/material/Button';
+import StravaButtonIcon from './std/StravaButtonIcon.svg';
 import { Link } from 'react-router-dom';
 
 function Home(props) {
@@ -16,7 +17,9 @@ function Home(props) {
     return (
         <div className='home-page'>
             { }
-            <Button variant="outlined" className='sign-in' component={Link} to={to}>Sign in with Strava</Button>
+            <Button component={Link} to={to}>
+                <img src={StravaButtonIcon} alt="Connect with Strava" />
+            </Button>
             <a href='/about'>What is this?</a>
         </div>
     );
