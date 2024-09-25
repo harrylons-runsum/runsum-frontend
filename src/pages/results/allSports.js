@@ -29,6 +29,7 @@ class AllSportsResults extends Component {
                     Highlights
                 </div>
                 <div className='section-break' />
+                <p style={{color: '#FFFFFF'}}>Coming soon!</p>
             </div>
         )
     }

@@ -126,13 +126,13 @@ class Results extends Component {
                             <AllSportsResults data={data['allSports']} />
                         )}
                         {currentTab === 1 && (
-                            <RunResults />
+                            <RunResults data={data['run']}/>
                         )}
                         {currentTab === 2 && (
-                            <BikeResults />
+                            <BikeResults data={data['ride']}/>
                         )}
                         {currentTab === 3 && (
-                            <SwimResults />
+                            <SwimResults data={data['swim']}/>
                         )}
                         <div className='buttons-container'>
                             <Button className='actionButtons' onClick={this.handleNewTimeRange}>New Time Range</Button>
