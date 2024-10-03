@@ -77,7 +77,6 @@ class Landing extends Component {
                 return response.json(); // Parse response body as JSON
             })
             .then(data => {
-                console.log(data);
                 // Handle successful response data
                 return data;
             })
@@ -98,8 +97,6 @@ class Landing extends Component {
                 if (data && data['access_token']) {
                     // successful code for token exchange
                     this.props.setAccessToken(data['access_token']);
-                    console.log(data);
-                    console.log(this.props.getAccessToken());
                 } else {
                     console.error('No token in response');
                     // Code failed. try to update token from existing

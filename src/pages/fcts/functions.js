@@ -1,7 +1,6 @@
 export async function getAllInfo(accessToken) {
     let allActivities = [];
     try {
-        console.log("in getAllInfo. AccessToken: ", accessToken);
         const startDate = localStorage.getItem('startDate');
         const endDate = localStorage.getItem('endDate');
         if (!startDate || !endDate) {
@@ -73,6 +72,9 @@ export async function getAllInfo(accessToken) {
 function calculateTotalDistance(activities) {
     return Math.floor(activities.reduce((total, activity) => total + activity.distance, 0) / 1609.34); // Convert meters to miles
 }
+function calculateTotalYards(activities) {
+    return Math.floor(activities.reduce((total, activity) => total + activity.distance, 0) * 1.0936132983); // Convert meters to yards
+}
 function calculateAverageHeartRate(activities) {
     const heartRates = activities.filter(activity => activity.has_heartrate).map(activity => activity.average_heartrate);
     if (heartRates.length === 0) return 0;
@@ -130,6 +132,17 @@ function calculateAveragePaceMPH(activities, totalDistance) {
     return (avgSpeed.toFixed(2)); // Return pace as miles per hour, rounded to 2 decimal places
 }
 
+function calculateAveragePacePer100Yards(activities, totalDistanceYards) {
+    let totalMovingTime = activities.reduce((total, activity) => total + activity.moving_time / 60, 0); // Convert seconds to minutes
+    let avgPacePer100Yards = totalMovingTime > 0 ? (totalMovingTime / totalDistanceYards) * 100 : 0; // Calculate time in minutes per 100 yards
+
+    const minutes = Math.floor(avgPacePer100Yards);
+    const seconds = Math.round((avgPacePer100Yards - minutes) * 60);
+    const formattedSeconds = seconds < 10 ? `0${seconds}` : seconds;
+
+    return `${minutes}:${formattedSeconds}`; // Return pace as "minutes:seconds per 100 yards"
+}
+
 function calculateAverageDistancePerActivity(totalDistance, activitiesCount) {
     return activitiesCount > 0 ? (totalDistance / activitiesCount).toFixed(2) : 0;
 }
@@ -184,64 +197,94 @@ function calculatePercentageActiveDays(activities, startDate, endDate) {
     return totalDays > 0 ? `${((activeDays.size / totalDays) * 100).toFixed(2)}%` : 0;
 }
 
+function formatISODate(isoString) {
+    const date = new Date(isoString);
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        hour12: true,
+        timeZoneName: 'short',
+    };
+    return date.toLocaleString('en-US', options);
+}
+
+function findMaxActivity(activities, metric) {
+    if (activities.length === 0) return null;
+    var filteredActivities;
+    if (metric == 'max_heartrate' || metric == 'average_heartrate') {
+        // Filter activities to only include those with heart rate data
+        filteredActivities = activities.filter(activity => activity.has_heartrate);
+        // If no activities have heart rate data, return null
+        if (filteredActivities.length === 0) return null;
+    }
+    else {
+        filteredActivities = activities;
+    }
+    // Find the activity with the longest distance
+    const longestActivity = filteredActivities.reduce((maxActivity, currentActivity) =>
+        currentActivity[metric] > maxActivity[metric] ? currentActivity : maxActivity
+    );
+
+    // Extract and calculate the desired features
+    const distanceInMiles = (longestActivity.distance / 1609.34).toFixed(2); // Convert meters to miles
+    const paceInMinutes = Math.floor(longestActivity.moving_time / 60 / distanceInMiles); // Calculate whole minutes
+    const paceInSeconds = Math.round((longestActivity.moving_time / 60 / distanceInMiles - paceInMinutes) * 60); // Calculate remaining seconds
+    // Ensure seconds are always displayed with two digits (e.g., "06" instead of "6")
+    const paceFormatted = `${paceInMinutes}:${paceInSeconds.toString().padStart(2, '0')}`;
+    const movingTimeInMinutes = Math.floor(longestActivity.moving_time / 60); // Convert seconds to minutes
+    const movingTimeFormatted = `${Math.floor(movingTimeInMinutes / 60)}h ${movingTimeInMinutes % 60}m`; // Format time as "hours:minutes"
+
+    return {
+        'Distance': `${distanceInMiles} miles`,
+        'Pace': `${paceFormatted} min/mile`,
+        'Moving Time': movingTimeFormatted,
+        'Sport': longestActivity.sport_type,
+        'Date': formatISODate(longestActivity.start_date),
+        'Name': longestActivity.name,
+        id: longestActivity.id,
+    };
+}
+
 async function extractAllSportMetrics(activities) {
     // DISTANCE
     const totalDistance = calculateTotalDistance(activities);
 
-    // AVG HEART RATE
-    const avgHeartRate = calculateAverageHeartRate(activities);
-
-    // KUDOS
-    const totalKudos = calculateTotalKudos(activities);
-    // TIME
-    const totalTimeSpent = calculateTotalTimeSpent(activities);
-
-    // ELEVATION
-    const totalElevation = calculateTotalElevationGain(activities);
-
-    // COUNT ACTIVE DAYS
-    const activeDaysCount = calculateActiveDays(activities);
-
-    // AVG SPEED (min/mi)
-    const avgPace = calculateAveragePaceMinMi(activities, totalDistance);
-
-    // AVG DISTANCE PER ACTIVITY
-    const avgDistancePerActivity = calculateAverageDistancePerActivity(totalDistance, activities.length);
-
-    // % ACTIVE DAYS
-    const percentActiveDays = calculatePercentageActiveDays(activities, localStorage.getItem('startDate'), localStorage.getItem('endDate'));
-
-    // ACTIVITY LENGTH
-    const averageLength = calculateAverageActivityLength(activities);
-
-    // ABSOLUTE MAX HR
-    const maxHR = calculateAbsoluteMaxHeartRate(activities);
-
     const allSports = {
-        'Activities': activities.length,
-        'Miles': totalDistance,
-        'Active Time': totalTimeSpent,
-        'Active Days': activeDaysCount,
-        'Of Days Active': percentActiveDays,
-        'Elevation gain': totalElevation,
-        'Average Pace (min/mi)': avgPace,
-        'Average miles per activity': avgDistancePerActivity,
-        'Average activity length': averageLength,
-        'Average Heart Rate': avgHeartRate,
-        'Max Heart Rate': maxHR,
-        'Kudos received': totalKudos,
+        stats: {
+            'Activities': activities.length,
+            'Miles': totalDistance,
+            'Active Time': calculateTotalTimeSpent(activities),
+            'Active Days': calculateActiveDays(activities),
+            'Of Days Active': calculatePercentageActiveDays(activities, localStorage.getItem('startDate'), localStorage.getItem('endDate')),
+            'Elevation gain': calculateTotalElevationGain(activities),
+            'Average Pace (min/mi)': calculateAveragePaceMinMi(activities, totalDistance),
+            'Average miles per activity': calculateAverageDistancePerActivity(totalDistance, activities.length),
+            'Average activity length': calculateAverageActivityLength(activities),
+            'Average Heart Rate': calculateAverageHeartRate(activities),
+            'Max Heart Rate': calculateAbsoluteMaxHeartRate(activities),
+            'Kudos received': calculateTotalKudos(activities),
+        },
+        highlights: {
+            'Farthest Activity': findMaxActivity(activities, 'distance'),
+            'Longest Activity': findMaxActivity(activities, 'moving_time'),
+            'Most Strenuous Activity': findMaxActivity(activities, 'suffer_score'),
+        }
     };
     return allSports;
 }
 
 // Re-calculate all metrics for running and create a new payload format
 async function extractRunMetrics(activities) {
-    // Filter activities for running-specific types 
     const runningActivities = activities.filter(activity =>
         activity.sport_type === 'Run' || activity.sport_type === 'Trail Run' || activity.sport_type === 'Virtual Run'
     );
-    if (runningActivities.length === 0) {
-        return {
+
+    return {
+        stats: runningActivities.length === 0 ? {
             'Activities': 0,
             'Miles run': 0,
             'Running Time': '0h 0m',
@@ -254,203 +297,106 @@ async function extractRunMetrics(activities) {
             'Average Heart Rate': 0,
             'Max Heart Rate': 0,
             'Kudos on your runs': 0
-        };
-    }
-
-    // DISTANCE
-    const totalDistance = calculateTotalDistance(runningActivities);
-
-    // AVG HEART RATE
-    const avgHeartRate = calculateAverageHeartRate(runningActivities);
-
-    // KUDOS
-    const totalKudos = calculateTotalKudos(runningActivities);
-
-    // TIME
-    const totalTimeSpent = calculateTotalTimeSpent(runningActivities);
-
-    // ELEVATION
-    const totalElevation = calculateTotalElevationGain(runningActivities);
-
-    // COUNT ACTIVE DAYS
-    const activeDaysCount = calculateActiveDays(runningActivities);
-
-    // AVG SPEED (min/mi)
-    const avgPace = calculateAveragePaceMinMi(runningActivities, totalDistance);
-
-    // AVG DISTANCE PER ACTIVITY
-    const avgDistancePerActivity = calculateAverageDistancePerActivity(totalDistance, runningActivities.length);
-
-    // % ACTIVE DAYS
-    const percentActiveDays = calculatePercentageActiveDays(runningActivities, localStorage.getItem('startDate'), localStorage.getItem('endDate'));
-
-    // ACTIVITY LENGTH
-    const averageLength = calculateAverageActivityLength(runningActivities);
-
-    // ABSOLUTE MAX HR
-    const maxHR = calculateAbsoluteMaxHeartRate(runningActivities);
-
-    const runMetrics = {
-        'Activities': runningActivities.length,
-        'Miles run': totalDistance,
-        'Running Time': totalTimeSpent,
-        'Running Days': activeDaysCount,
-        'Of Days Running': percentActiveDays,
-        'Elevation gain': totalElevation,
-        'Average Pace (min/mi)': avgPace,
-        'Average miles per run': avgDistancePerActivity,
-        'Average run length': averageLength,
-        'Average Heart Rate': avgHeartRate,
-        'Max Heart Rate': maxHR,
-        'Kudos on your runs': totalKudos,
+        } : {
+            'Activities': runningActivities.length,
+            'Miles run': calculateTotalDistance(runningActivities),
+            'Running Time': calculateTotalTimeSpent(runningActivities),
+            'Running Days': calculateActiveDays(runningActivities),
+            'Of Days Running': calculatePercentageActiveDays(runningActivities, localStorage.getItem('startDate'), localStorage.getItem('endDate')),
+            'Elevation gain': calculateTotalElevationGain(runningActivities),
+            'Average Pace (min/mi)': calculateAveragePaceMinMi(runningActivities, calculateTotalDistance(runningActivities)),
+            'Average miles per run': calculateAverageDistancePerActivity(calculateTotalDistance(runningActivities), runningActivities.length),
+            'Average run length': calculateAverageActivityLength(runningActivities),
+            'Average Heart Rate': calculateAverageHeartRate(runningActivities),
+            'Max Heart Rate': calculateAbsoluteMaxHeartRate(runningActivities),
+            'Kudos on your runs': calculateTotalKudos(runningActivities)
+        },
+        highlights: {
+            'Farthest Run': findMaxActivity(runningActivities, 'distance'),
+            'Longest Run': findMaxActivity(runningActivities, 'moving_time'),
+            'Most Strenuous Run': findMaxActivity(runningActivities, 'suffer_score'),
+            'Peak Heart Rate Run': findMaxActivity(runningActivities, 'max_heartrate'),
+        }
     };
-
-    return runMetrics;
 }
 
 async function extractBikeMetrics(activities) {
-    // filter to type in (ride, virtual ride, etc)
     const bikeActivities = activities.filter(activity =>
         activity.sport_type === 'Ride' || activity.sport_type === 'Mountain Bike Ride' || activity.sport_type === 'Gravel Ride' || activity.sport_type === 'Virtual Ride'
     );
-    if (bikeActivities.length === 0) {
-        return {
+    const totalDistance = calculateTotalDistance(bikeActivities);
+    return {
+        stats: bikeActivities.length === 0 ? {
             'Activities': 0,
             'Miles cycled': 0,
             'Cycling Time': '0h 0m',
             'Cycling Days': 0,
             'Of Days Cycling': '0%',
             'Elevation gain': '0 ft',
-            'Average Speed': '0',
+            'Average Speed (mph)': '0.00',
             'Average miles per ride': 0,
             'Average ride length': '0h 0m',
             'Average Heart Rate': 0,
             'Max Heart Rate': 0,
             'Kudos on your rides': 0
-        };
-    }
-
-    // DISTANCE
-    const totalDistance = calculateTotalDistance(bikeActivities);
-
-    // AVG HEART RATE
-    const avgHeartRate = calculateAverageHeartRate(bikeActivities);
-
-    // KUDOS
-    const totalKudos = calculateTotalKudos(bikeActivities);
-
-    // TIME
-    const totalTimeSpent = calculateTotalTimeSpent(bikeActivities);
-
-    // ELEVATION
-    const totalElevation = calculateTotalElevationGain(bikeActivities);
-
-    // COUNT ACTIVE DAYS
-    const activeDaysCount = calculateActiveDays(bikeActivities);
-
-    // AVG SPEED (min/mi)
-    const avgPace = calculateAveragePaceMPH(bikeActivities, totalDistance);
-
-    // AVG DISTANCE PER ACTIVITY
-    const avgDistancePerActivity = calculateAverageDistancePerActivity(totalDistance, bikeActivities.length);
-
-    // % ACTIVE DAYS
-    const percentActiveDays = calculatePercentageActiveDays(bikeActivities, localStorage.getItem('startDate'), localStorage.getItem('endDate'));
-
-    // ACTIVITY LENGTH
-    const averageLength = calculateAverageActivityLength(bikeActivities);
-
-    // ABSOLUTE MAX HR
-    const maxHR = calculateAbsoluteMaxHeartRate(bikeActivities);
-
-    const bikeMetrics = {
-        'Activities': bikeActivities.length,
-        'Miles cycled': totalDistance,
-        'Cycling Time': totalTimeSpent,
-        'Cycling Days': activeDaysCount,
-        'Of Days Cycling': percentActiveDays,
-        'Elevation gain': totalElevation,
-        'Average Speed (mph)': avgPace,
-        'Average miles per ride': avgDistancePerActivity,
-        'Average ride length': averageLength,
-        'Average Heart Rate': avgHeartRate,
-        'Max Heart Rate': maxHR,
-        'Kudos on your rides': totalKudos,
+        } : {
+            'Activities': bikeActivities.length,
+            'Miles cycled': totalDistance,
+            'Cycling Time': calculateTotalTimeSpent(bikeActivities),
+            'Cycling Days': calculateActiveDays(bikeActivities),
+            'Of Days Cycling': calculatePercentageActiveDays(bikeActivities, localStorage.getItem('startDate'), localStorage.getItem('endDate')),
+            'Elevation gain': calculateTotalElevationGain(bikeActivities),
+            'Average Speed (mph)': calculateAveragePaceMPH(bikeActivities, totalDistance),
+            'Average miles per ride': calculateAverageDistancePerActivity(totalDistance, bikeActivities.length),
+            'Average ride length': calculateAverageActivityLength(bikeActivities),
+            'Average Heart Rate': calculateAverageHeartRate(bikeActivities),
+            'Max Heart Rate': calculateAbsoluteMaxHeartRate(bikeActivities),
+            'Kudos on your rides': calculateTotalKudos(bikeActivities)
+        },
+        highlights: {
+            'Farthest Ride': findMaxActivity(bikeActivities, 'distance'),
+            'Longest Ride': findMaxActivity(bikeActivities, 'moving_time'),
+            'Most Strenuous Ride': findMaxActivity(bikeActivities, 'suffer_score'),
+        }
     };
-
-    return bikeMetrics;
-
 }
 
 async function extractSwimMetrics(activities) {
-    // filter to type swim
-    const swimActivities = activities.filter(activity =>
-        activity.sport_type === 'Swim'
-    );
-    if (swimActivities.length === 0) {
-        return {
-            'Activities': 0,
-            'Miles': 0,
-            'Active Time': '0h 0m',
-            'Active Days': 0,
-            'Of Days Active': '0%',
+    const swimActivities = activities.filter(activity => activity.sport_type === 'Swim');
+    const totalDistance = calculateTotalYards(swimActivities);
+
+    return {
+        stats: swimActivities.length === 0 ? {
+            'Swims': 0,
+            'Yards': 0,
+            'Swimming Time': '0h 0m',
+            'Swim Days': 0,
+            'Of Days Swimming': '0%',
             'Elevation gain': '0 ft',
-            'Average Pace (min/mi)': '0:00',
-            'Average miles per activity': 0,
+            'Average pace /100y': '0:00',
+            'Average yds per activity': 0,
             'Average activity length': '0h 0m',
             'Average Heart Rate': 0,
             'Max Heart Rate': 0,
-            'Kudos received': 0,
-        };
-    }
-
-    // DISTANCE
-    const totalDistance = calculateTotalDistance(swimActivities);
-
-    // AVG HEART RATE
-    const avgHeartRate = calculateAverageHeartRate(swimActivities);
-
-    // KUDOS
-    const totalKudos = calculateTotalKudos(swimActivities);
-
-    // TIME
-    const totalTimeSpent = calculateTotalTimeSpent(swimActivities);
-
-    // ELEVATION
-    const totalElevation = calculateTotalElevationGain(swimActivities);
-
-    // COUNT ACTIVE DAYS
-    const activeDaysCount = calculateActiveDays(swimActivities);
-
-    // AVG SPEED (min/mi)
-    const avgPace = calculateAveragePaceMinMi(swimActivities, totalDistance);
-
-    // AVG DISTANCE PER ACTIVITY
-    const avgDistancePerActivity = calculateAverageDistancePerActivity(totalDistance, swimActivities.length);
-
-    // % ACTIVE DAYS
-    const percentActiveDays = calculatePercentageActiveDays(swimActivities, localStorage.getItem('startDate'), localStorage.getItem('endDate'));
-
-    // ACTIVITY LENGTH
-    const averageLength = calculateAverageActivityLength(swimActivities);
-
-    // ABSOLUTE MAX HR
-    const maxHR = calculateAbsoluteMaxHeartRate(swimActivities);
-
-    const swimMetrics = {
-        'Activities': swimActivities.length,
-        'Miles run': totalDistance,
-        'Running Time': totalTimeSpent,
-        'Running Days': activeDaysCount,
-        'Of Days Running': percentActiveDays,
-        'Elevation gain': totalElevation,
-        'Average Pace (min/mi)': avgPace,
-        'Average miles per run': avgDistancePerActivity,
-        'Average run length': averageLength,
-        'Average Heart Rate': avgHeartRate,
-        'Max Heart Rate': maxHR,
-        'Kudos on your runs': totalKudos,
+            'Kudos received': 0
+        } : {
+            'Swims': swimActivities.length,
+            'Yards': totalDistance,
+            'Swimming Time': calculateTotalTimeSpent(swimActivities),
+            'Swim Days': calculateActiveDays(swimActivities),
+            'Of Days Swimming': calculatePercentageActiveDays(swimActivities, localStorage.getItem('startDate'), localStorage.getItem('endDate')),
+            'Elevation gain': calculateTotalElevationGain(swimActivities),
+            'Average pace /100y': calculateAveragePacePer100Yards(swimActivities, totalDistance),
+            'Average yds per activity': calculateAverageDistancePerActivity(totalDistance, swimActivities.length),
+            'Average activity length': calculateAverageActivityLength(swimActivities),
+            'Average Heart Rate': calculateAverageHeartRate(swimActivities),
+            'Max Heart Rate': calculateAbsoluteMaxHeartRate(swimActivities),
+            'Kudos received': calculateTotalKudos(swimActivities)
+        },
+        highlights: {
+            'Farthest Swim': findMaxActivity(swimActivities, 'distance'),
+            'Longest Swim': findMaxActivity(swimActivities, 'moving_time'),
+            'Most Strenuous Swim': findMaxActivity(swimActivities, 'suffer_score')
+        }
     };
-
-    return swimMetrics;
 }

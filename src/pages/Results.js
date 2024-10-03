@@ -4,10 +4,7 @@ import { Button, Tabs, Tab, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { getAllInfo } from './fcts/functions.js';
 import { Navigate } from 'react-router-dom';
-import AllSportsResults from './results/allSports.js';
-import RunResults from './results/run.js';
-import BikeResults from './results/bike.js';
-import SwimResults from './results/swim.js';
+import SportResults from './results/allSports.js';
 
 
 class Results extends Component {
@@ -34,12 +31,17 @@ class Results extends Component {
         localStorage.removeItem('endDate');
         this.setState({ redirectToLanding: true });
     };
+
     StyledTabs = styled((props) => (
         <Tabs
             {...props}
             TabIndicatorProps={{ children: <span className="MuiTabs-indicatorSpan" /> }}
         />
     ))({
+        position: 'sticky',  // Make the tabs sticky
+        top: 0,              // Position them at the top
+        zIndex: 10,          // Ensure they are above other content
+        backgroundColor: '#020d2b', // Background color to match the rest of the page
         '& .MuiTabs-indicator': {
             display: 'flex',
             justifyContent: 'center',
@@ -67,6 +69,18 @@ class Results extends Component {
             },
         }),
     );
+
+    TabsContainer = styled('div')({
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        backgroundColor: '#282c34',
+        width: '100vw',  // Full viewport width
+        left: 0,         // Align to the left of the viewport
+        margin: 0,       // Remove any margin
+        padding: 0,      // Remove any padding
+    });
+
 
     async componentDidMount() {
         if (!localStorage.getItem('startDate')) {
@@ -99,6 +113,8 @@ class Results extends Component {
             this.setState({ loading: false });
         }
     }
+
+
     render() {
         const { loading, currentTab, data } = this.state;
         if (this.state.redirectToLanding) {
@@ -115,24 +131,26 @@ class Results extends Component {
                     </div>
                 ) : (
                     <div className='content-container'>
-                        <this.StyledTabs value={currentTab} onChange={this.handleTabChange} textColor="secondary" centered>
-                            <this.StyledTab label="All Sports" />
-                            <this.StyledTab label="Run" />
-                            <this.StyledTab label="Bike" />
-                            <this.StyledTab label="Swim" />
-                        </this.StyledTabs>
+                        <this.TabsContainer>
+                            <this.StyledTabs value={currentTab} onChange={this.handleTabChange} textColor="secondary" centered>
+                                <this.StyledTab label="All Sports" />
+                                <this.StyledTab label="Run" />
+                                <this.StyledTab label="Bike" />
+                                <this.StyledTab label="Swim" />
+                            </this.StyledTabs>
+                        </this.TabsContainer>
                         <Typography color='#c0c8d0' sx={{ mt: 2 }}>From {startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} to {endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}:</Typography>
                         {currentTab === 0 && (
-                            <AllSportsResults data={data['allSports']} />
+                            <SportResults data={data['allSports']} />
                         )}
                         {currentTab === 1 && (
-                            <RunResults data={data['run']}/>
+                            <SportResults data={data['run']} />
                         )}
                         {currentTab === 2 && (
-                            <BikeResults data={data['ride']}/>
+                            <SportResults data={data['ride']} />
                         )}
                         {currentTab === 3 && (
-                            <SwimResults data={data['swim']}/>
+                            <SportResults data={data['swim']} />
                         )}
                         <div className='buttons-container'>
                             <Button className='actionButtons' onClick={this.handleNewTimeRange}>New Time Range</Button>

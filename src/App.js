@@ -13,13 +13,10 @@ class App extends Component {
     accessToken : "",
   };
   setAccessToken = (newToken) => {
-    console.log("setting access token", newToken);
-    this.setState({ accessToken: newToken }, () => {
-      console.log("updated state:", this.state.accessToken);
-    });
+    console.log("setting access token");
+    this.setState({ accessToken: newToken });
   };
   getAccessToken = () => {
-    console.log(this.state.accessToken);
     return this.state.accessToken;
   }
   // Method for handling logout
