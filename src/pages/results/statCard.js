@@ -13,6 +13,7 @@ class StatCard extends Component {
             borderRadius: 3 ,
             boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
             '&:hover': {
+                transform: 'translateY(-4px)',
                 boxShadow: '0 6px 12px rgba(100, 95, 228, 0.3)',
             },
         }

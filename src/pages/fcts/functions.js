@@ -57,10 +57,10 @@ export async function getAllInfo(accessToken) {
     }
     try {
         var payload = {};
-        payload['allSports'] = await extractAllSportMetrics(allActivities);
-        payload['run'] = await extractRunMetrics(allActivities);
-        payload['ride'] = await extractBikeMetrics(allActivities);
-        payload['swim'] = await extractSwimMetrics(allActivities);
+        payload['allSports'] = await extractAllSportMetrics(allActivities, accessToken);
+        payload['run'] = await extractRunMetrics(allActivities, accessToken);
+        payload['ride'] = await extractBikeMetrics(allActivities, accessToken);
+        payload['swim'] = await extractSwimMetrics(allActivities, accessToken);
         console.log(payload);
         return payload;
     }
@@ -116,7 +116,11 @@ function calculateActiveDays(activities) {
 }
 
 function calculateAveragePaceMinMi(activities, totalDistance) {
-    let totalMovingTime = activities.reduce((total, activity) => total + activity.moving_time / 60, 0); // Convert seconds to minutes
+    // Filter out activities where distance is 0
+    const filteredActivities = activities.filter(activity => activity.distance > 0);
+
+    // Calculate total moving time for filtered activities
+    let totalMovingTime = filteredActivities.reduce((total, activity) => total + activity.moving_time / 60, 0); // Convert seconds to minutes
     let avgSpeed = totalMovingTime > 0 ? (totalMovingTime / totalDistance) : 0;
 
     const minutes = Math.floor(avgSpeed);
@@ -125,15 +129,24 @@ function calculateAveragePaceMinMi(activities, totalDistance) {
 
     return `${minutes}:${formattedSeconds}`; // Return pace as "minutes:seconds"
 }
+
 function calculateAveragePaceMPH(activities, totalDistance) {
-    let totalMovingTime = activities.reduce((total, activity) => total + activity.moving_time / 3600, 0); // Convert seconds to hours
+    // Filter out activities where distance is 0
+    const filteredActivities = activities.filter(activity => activity.distance > 0);
+
+    // Calculate total moving time for filtered activities
+    let totalMovingTime = filteredActivities.reduce((total, activity) => total + activity.moving_time / 3600, 0); // Convert seconds to hours
     let avgSpeed = totalMovingTime > 0 ? (totalDistance / totalMovingTime) : 0; // Calculate speed in MPH
 
-    return (avgSpeed.toFixed(2)); // Return pace as miles per hour, rounded to 2 decimal places
+    return avgSpeed.toFixed(2); // Return pace as miles per hour, rounded to 2 decimal places
 }
 
 function calculateAveragePacePer100Yards(activities, totalDistanceYards) {
-    let totalMovingTime = activities.reduce((total, activity) => total + activity.moving_time / 60, 0); // Convert seconds to minutes
+    // Filter out activities where distance is 0
+    const filteredActivities = activities.filter(activity => activity.distance > 0);
+
+    // Calculate total moving time for filtered activities
+    let totalMovingTime = filteredActivities.reduce((total, activity) => total + activity.moving_time / 60, 0); // Convert seconds to minutes
     let avgPacePer100Yards = totalMovingTime > 0 ? (totalMovingTime / totalDistanceYards) * 100 : 0; // Calculate time in minutes per 100 yards
 
     const minutes = Math.floor(avgPacePer100Yards);
@@ -205,17 +218,17 @@ function formatISODate(isoString) {
         day: 'numeric',
         hour: 'numeric',
         minute: 'numeric',
-        second: 'numeric',
         hour12: true,
-        timeZoneName: 'short',
     };
     return date.toLocaleString('en-US', options);
 }
 
-function findMaxActivity(activities, metric) {
+
+async function findMaxActivity(activities, metric, accessToken) {
+    console.log(accessToken);
     if (activities.length === 0) return null;
     var filteredActivities;
-    if (metric == 'max_heartrate' || metric == 'average_heartrate') {
+    if (metric === 'max_heartrate' || metric === 'average_heartrate' || metric === 'suffer_score') {
         // Filter activities to only include those with heart rate data
         filteredActivities = activities.filter(activity => activity.has_heartrate);
         // If no activities have heart rate data, return null
@@ -225,9 +238,24 @@ function findMaxActivity(activities, metric) {
         filteredActivities = activities;
     }
     // Find the activity with the longest distance
-    const longestActivity = filteredActivities.reduce((maxActivity, currentActivity) =>
+    const foundActivity = filteredActivities.reduce((maxActivity, currentActivity) =>
         currentActivity[metric] > maxActivity[metric] ? currentActivity : maxActivity
     );
+    // Phased out code to make call to detailed activity API
+    // const id = foundActivity['id']
+    // const response = await fetch(`https://www.strava.com/api/v3/activities/${id}`, {
+    //     method: 'GET',
+    //     headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': 'Bearer ' + accessToken,
+    //     },
+    // });
+    // if(!response.ok){
+    //     //handle error
+    // }
+    // const longestActivity = await response.json();
+    // console.log(longestActivity);
+    const longestActivity = foundActivity;
 
     // Extract and calculate the desired features
     const distanceInMiles = (longestActivity.distance / 1609.34).toFixed(2); // Convert meters to miles
@@ -237,7 +265,6 @@ function findMaxActivity(activities, metric) {
     const paceFormatted = `${paceInMinutes}:${paceInSeconds.toString().padStart(2, '0')}`;
     const movingTimeInMinutes = Math.floor(longestActivity.moving_time / 60); // Convert seconds to minutes
     const movingTimeFormatted = `${Math.floor(movingTimeInMinutes / 60)}h ${movingTimeInMinutes % 60}m`; // Format time as "hours:minutes"
-
     return {
         'Distance': `${distanceInMiles} miles`,
         'Pace': `${paceFormatted} min/mile`,
@@ -245,11 +272,13 @@ function findMaxActivity(activities, metric) {
         'Sport': longestActivity.sport_type,
         'Date': formatISODate(longestActivity.start_date),
         'Name': longestActivity.name,
+        'Suffer Score': longestActivity.suffer_score,
         id: longestActivity.id,
+        'Achievement Count': longestActivity.achievement_count
     };
 }
 
-async function extractAllSportMetrics(activities) {
+async function extractAllSportMetrics(activities, accessToken) {
     // DISTANCE
     const totalDistance = calculateTotalDistance(activities);
 
@@ -269,16 +298,17 @@ async function extractAllSportMetrics(activities) {
             'Kudos received': calculateTotalKudos(activities),
         },
         highlights: {
-            'Farthest Activity': findMaxActivity(activities, 'distance'),
-            'Longest Activity': findMaxActivity(activities, 'moving_time'),
-            'Most Strenuous Activity': findMaxActivity(activities, 'suffer_score'),
+            'Farthest Activity': await findMaxActivity(activities, 'distance', accessToken),
+            'Longest Activity': await findMaxActivity(activities, 'moving_time', accessToken),
+            'Most Strenuous Activity': await findMaxActivity(activities, 'suffer_score', accessToken),
+            'Peak Heart Rate Activity': await findMaxActivity(activities, 'max_heartrate', accessToken),
         }
     };
     return allSports;
 }
 
 // Re-calculate all metrics for running and create a new payload format
-async function extractRunMetrics(activities) {
+async function extractRunMetrics(activities, accessToken) {
     const runningActivities = activities.filter(activity =>
         activity.sport_type === 'Run' || activity.sport_type === 'Trail Run' || activity.sport_type === 'Virtual Run'
     );
@@ -312,15 +342,15 @@ async function extractRunMetrics(activities) {
             'Kudos on your runs': calculateTotalKudos(runningActivities)
         },
         highlights: {
-            'Farthest Run': findMaxActivity(runningActivities, 'distance'),
-            'Longest Run': findMaxActivity(runningActivities, 'moving_time'),
-            'Most Strenuous Run': findMaxActivity(runningActivities, 'suffer_score'),
-            'Peak Heart Rate Run': findMaxActivity(runningActivities, 'max_heartrate'),
+            'Farthest Run': await findMaxActivity(runningActivities, 'distance', accessToken),
+            'Longest Run': await findMaxActivity(runningActivities, 'moving_time', accessToken),
+            'Most Strenuous Run': await findMaxActivity(runningActivities, 'suffer_score', accessToken),
+            'Peak Heart Rate Run': await findMaxActivity(runningActivities, 'max_heartrate', accessToken),
         }
     };
 }
 
-async function extractBikeMetrics(activities) {
+async function extractBikeMetrics(activities, accessToken) {
     const bikeActivities = activities.filter(activity =>
         activity.sport_type === 'Ride' || activity.sport_type === 'Mountain Bike Ride' || activity.sport_type === 'Gravel Ride' || activity.sport_type === 'Virtual Ride'
     );
@@ -354,14 +384,15 @@ async function extractBikeMetrics(activities) {
             'Kudos on your rides': calculateTotalKudos(bikeActivities)
         },
         highlights: {
-            'Farthest Ride': findMaxActivity(bikeActivities, 'distance'),
-            'Longest Ride': findMaxActivity(bikeActivities, 'moving_time'),
-            'Most Strenuous Ride': findMaxActivity(bikeActivities, 'suffer_score'),
+            'Farthest Ride': await findMaxActivity(bikeActivities, 'distance'),
+            'Longest Ride': await findMaxActivity(bikeActivities, 'moving_time'),
+            'Most Strenuous Ride': await findMaxActivity(bikeActivities, 'suffer_score'),
+            'Peak Heart Rate Ride': await findMaxActivity(bikeActivities, 'max_heartrate'),
         }
     };
 }
 
-async function extractSwimMetrics(activities) {
+async function extractSwimMetrics(activities, accessToken) {
     const swimActivities = activities.filter(activity => activity.sport_type === 'Swim');
     const totalDistance = calculateTotalYards(swimActivities);
 
@@ -394,9 +425,10 @@ async function extractSwimMetrics(activities) {
             'Kudos received': calculateTotalKudos(swimActivities)
         },
         highlights: {
-            'Farthest Swim': findMaxActivity(swimActivities, 'distance'),
-            'Longest Swim': findMaxActivity(swimActivities, 'moving_time'),
-            'Most Strenuous Swim': findMaxActivity(swimActivities, 'suffer_score')
+            'Farthest Swim': await findMaxActivity(swimActivities, 'distance'),
+            'Longest Swim': await findMaxActivity(swimActivities, 'moving_time'),
+            'Most Strenuous Swim': await findMaxActivity(swimActivities, 'suffer_score'),
+            'Max Heart Rate Swim': await findMaxActivity(swimActivities, 'max_heartrate')
         }
     };
 }

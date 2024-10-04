@@ -4,7 +4,7 @@ import { Button, Tabs, Tab, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { getAllInfo } from './fcts/functions.js';
 import { Navigate } from 'react-router-dom';
-import SportResults from './results/allSports.js';
+import SportResults from './results/SportResults.js';
 
 
 class Results extends Component {
@@ -141,17 +141,21 @@ class Results extends Component {
                         </this.TabsContainer>
                         <Typography color='#c0c8d0' sx={{ mt: 2 }}>From {startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} to {endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}:</Typography>
                         {currentTab === 0 && (
-                            <SportResults data={data['allSports']} />
+                            <SportResults data={data['allSports']} sport='allSports' />
                         )}
                         {currentTab === 1 && (
-                            <SportResults data={data['run']} />
+                            <SportResults data={data['run']} sport='run' />
                         )}
                         {currentTab === 2 && (
-                            <SportResults data={data['ride']} />
+                            <SportResults data={data['ride']} sport='ride' />
                         )}
                         {currentTab === 3 && (
-                            <SportResults data={data['swim']} />
+                            <SportResults data={data['swim']} sport='swim' />
                         )}
+                        <p style={{ color: '#FFFFFF' }}>Got questions? Check out the <a a style={{ color: '#FC4C02' }} target='_blank' rel='noreferrer' href='/FAQ'>
+                                FAQ
+                            </a>
+                        </p>
                         <div className='buttons-container'>
                             <Button className='actionButtons' onClick={this.handleNewTimeRange}>New Time Range</Button>
                             <Button className='actionButtons' onClick={this.handleLogout}>Log out</Button>

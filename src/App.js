@@ -7,10 +7,11 @@ import Footer from './pages/std/footer';
 import Landing from './pages/Landing';
 import NeedLogin from './pages/needLogin';
 import Results from './pages/Results';
+import FAQ from './pages/FAQ';
 
 class App extends Component {
   state = {
-    accessToken : "",
+    accessToken: "",
   };
   setAccessToken = (newToken) => {
     console.log("setting access token");
@@ -38,12 +39,16 @@ class App extends Component {
           <Route path="/about" element={<About />} />
           <Route
             path="/landing"
-            element={<Landing logout={this.logout} setAccessToken={this.setAccessToken} getAccessToken={this.getAccessToken}/>}
+            element={<Landing logout={this.logout} setAccessToken={this.setAccessToken} getAccessToken={this.getAccessToken} />}
           />
           <Route path="/needlogin" element={<NeedLogin />} />
           <Route
             path="/results"
-            element={<Results logout={this.logout} getAccessToken={this.getAccessToken}/>}
+            element={<Results logout={this.logout} getAccessToken={this.getAccessToken} />}
+          />
+          <Route
+            path="/FAQ"
+            element={<FAQ />}
           />
         </Routes>
         <Footer /> {/* Place Footer outside of Routes to appear on every page */}

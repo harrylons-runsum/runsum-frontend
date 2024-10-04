@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
 import { Grid2 } from '@mui/material';
 import StatCard from './statCard';
+import HighlightCard from './highlightCard';
 
-class AllSportsResults extends Component {
+class SportResults extends Component {
     render() {
         const { data } = this.props;
         if (!data) {
@@ -29,10 +30,14 @@ class AllSportsResults extends Component {
                     Highlights
                 </div>
                 <div className='section-break' />
-                <p style={{color: '#FFFFFF'}}>Coming soon!</p>
+                {Object.entries(data['highlights']).map(([key, value]) => (
+                    value ? (
+                        <HighlightCard highlightName={key} data={value} sport={this.props.sport} />
+                    ) : null
+                ))}
             </div>
         )
     }
 }
 
-export default AllSportsResults;
+export default SportResults;

@@ -1,6 +1,15 @@
 $juniper: #648c94;
 $eagle: #B3BAA0;
 
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  padding: 0px;
+  overflow-x: hidden;
+}
+
 .App {
   text-align: center;
   display: flex;
@@ -168,5 +177,21 @@ $eagle: #B3BAA0;
     /* Ensures image fits inside the container */
     object-fit: contain;
     /* Keeps the image aspect ratio */
+  }
+}
+
+.highlight-container {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  padding-left: 30px;
+  padding-right: 30px;
+  padding-top: 15px;
+
+  @media (max-width: 768px) {
+    flex-direction: column; // Change the flex direction to column on smaller screens
+    padding-left: 10px;     // Decrease left padding
+    padding-right: 10px;    // Decrease right padding
+    padding-top: 10px;      // Decrease top padding
   }
 }

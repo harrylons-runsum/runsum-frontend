@@ -22,10 +22,15 @@ class Landing extends Component {
         });
     }
     async setEndDate(date) {
+        // Switch endDate from start of selected day to end of selected day
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
         await this.setState({
-            endDate: date
+            endDate: endOfDay
         });
     }
+
 
     async getTokenFromCode(codeValue) {
         let payload = {
@@ -88,7 +93,7 @@ class Landing extends Component {
     }
 
     async componentDidMount() {
-        console.log('requesting from ',process.env.REACT_APP_BACKEND_URL);
+        console.log('requesting from ', process.env.REACT_APP_BACKEND_URL);
         try {
             const searchParams = new URLSearchParams(window.location.search);
 
@@ -165,7 +170,7 @@ class Landing extends Component {
             }
             catch (e) {
                 console.error('Couldn\'t refresh token on render. redirecting');
-                this.setState({redirectToNeedLogin: true});
+                this.setState({ redirectToNeedLogin: true });
             }
             return <Navigate to="/results" />;
         }
