@@ -185,7 +185,7 @@ class Landing extends Component {
                 {loading ? (
                     <div className="spinner-container">
                         <ClipLoader color="#3498db" loading={loading} size={60} />
-                        <p color='#ffffff'>Validating login...</p>
+                        <p style={{color:'#ffffff'}}>Validating login...</p>
                     </div>
                 ) : (
                     <div className='picker-container'>

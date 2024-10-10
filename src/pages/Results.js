@@ -120,6 +120,9 @@ class Results extends Component {
         if (this.state.redirectToLanding) {
             return <Navigate to="/landing" />;
         }
+        const runs = (data?.run?.stats?.Runs);
+        const rides = (data?.ride?.stats?.Rides);
+        const swims = (data?.swim?.stats?.Swims);
         const startDate = new Date(localStorage.getItem("startDate"));
         const endDate = new Date(localStorage.getItem("endDate"));
         return (
@@ -134,9 +137,9 @@ class Results extends Component {
                         <this.TabsContainer>
                             <this.StyledTabs value={currentTab} onChange={this.handleTabChange} textColor="secondary" centered>
                                 <this.StyledTab label="All Sports" />
-                                <this.StyledTab label="Run" />
-                                <this.StyledTab label="Bike" />
-                                <this.StyledTab label="Swim" />
+                                {runs && <this.StyledTab label="Run" />}
+                                {rides && <this.StyledTab label="Bike" />}
+                                {swims && <this.StyledTab label="Swim" />}
                             </this.StyledTabs>
                         </this.TabsContainer>
                         <Typography color='#c0c8d0' sx={{ mt: 2 }}>From {startDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })} to {endDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}:</Typography>
@@ -146,10 +149,10 @@ class Results extends Component {
                         {currentTab === 1 && (
                             <SportResults data={data['run']} sport='run' />
                         )}
-                        {currentTab === 2 && (
+                        {currentTab === 2  && (
                             <SportResults data={data['ride']} sport='ride' />
                         )}
-                        {currentTab === 3 && (
+                        {currentTab === 3  &&  (
                             <SportResults data={data['swim']} sport='swim' />
                         )}
                         <p style={{ color: '#FFFFFF' }}>Got questions? Check out the <a a style={{ color: '#FC4C02' }} target='_blank' rel='noreferrer' href='/FAQ'>

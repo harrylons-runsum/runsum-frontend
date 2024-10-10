@@ -315,7 +315,7 @@ async function extractRunMetrics(activities, accessToken) {
 
     return {
         stats: runningActivities.length === 0 ? {
-            'Activities': 0,
+            'Runs': 0,
             'Miles run': 0,
             'Running Time': '0h 0m',
             'Running Days': 0,
@@ -328,7 +328,7 @@ async function extractRunMetrics(activities, accessToken) {
             'Max Heart Rate': 0,
             'Kudos on your runs': 0
         } : {
-            'Activities': runningActivities.length,
+            'Runs': runningActivities.length,
             'Miles run': calculateTotalDistance(runningActivities),
             'Running Time': calculateTotalTimeSpent(runningActivities),
             'Running Days': calculateActiveDays(runningActivities),
@@ -357,7 +357,7 @@ async function extractBikeMetrics(activities, accessToken) {
     const totalDistance = calculateTotalDistance(bikeActivities);
     return {
         stats: bikeActivities.length === 0 ? {
-            'Activities': 0,
+            'Rides': 0,
             'Miles cycled': 0,
             'Cycling Time': '0h 0m',
             'Cycling Days': 0,
@@ -370,7 +370,7 @@ async function extractBikeMetrics(activities, accessToken) {
             'Max Heart Rate': 0,
             'Kudos on your rides': 0
         } : {
-            'Activities': bikeActivities.length,
+            'Rides': bikeActivities.length,
             'Miles cycled': totalDistance,
             'Cycling Time': calculateTotalTimeSpent(bikeActivities),
             'Cycling Days': calculateActiveDays(bikeActivities),
