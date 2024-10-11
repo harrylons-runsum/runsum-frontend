@@ -108,7 +108,7 @@ function calculateActiveDays(activities) {
     const activeDays = new Set();
     activities.forEach(activity => {
         // Extract the date in the local timezone to avoid issues with time shifts
-        const date = new Date(activity.start_date);
+        const date = new Date(activity.start_date_local);
         const localDate = date.getFullYear() + '-' + (date.getMonth() + 1).toString().padStart(2, '0') + '-' + date.getDate().toString().padStart(2, '0');
         activeDays.add(localDate);
     });
@@ -200,7 +200,7 @@ function calculatePercentageActiveDays(activities, startDate, endDate) {
 
     activities.forEach(activity => {
         // Convert the activity's start date to a day (ignoring time)
-        const activityDate = new Date(activity.start_date).toDateString();
+        const activityDate = new Date(activity.start_date_local).toDateString();
         activeDays.add(activityDate);
     });
 
@@ -219,6 +219,7 @@ function formatISODate(isoString) {
         hour: 'numeric',
         minute: 'numeric',
         hour12: true,
+        timeZone: 'UTC', // Force UTC to avoid timezone conversion
     };
     return date.toLocaleString('en-US', options);
 }
@@ -270,7 +271,7 @@ async function findMaxActivity(activities, metric, accessToken) {
         'Pace': `${paceFormatted} min/mile`,
         'Moving Time': movingTimeFormatted,
         'Sport': longestActivity.sport_type,
-        'Date': formatISODate(longestActivity.start_date),
+        'Date': formatISODate(longestActivity.start_date_local),
         'Name': longestActivity.name,
         'Suffer Score': longestActivity.suffer_score,
         id: longestActivity.id,
