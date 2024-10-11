@@ -17,10 +17,12 @@ class Landing extends Component {
         redirectToNeedLogin: false,
     };
     async setStartDate(date) {
+        console.log(typeof(date));
         await this.setState({
             startDate: date
         });
     }
+    
     async setEndDate(date) {
         // Switch endDate from start of selected day to end of selected day
         const endOfDay = new Date(date);
@@ -29,6 +31,11 @@ class Landing extends Component {
         await this.setState({
             endDate: endOfDay
         });
+    }
+
+    async setFromPreset(dates){
+        await this.setStartDate(dates[0]);
+        await this.setEndDate(dates[1]);
     }
 
 
@@ -144,7 +151,7 @@ class Landing extends Component {
             if (this.state.startDate >= this.state.endDate) {
                 this.setState({ enterBothWarning: false });
                 this.setState({ dateOrderWarning: true });
-                console.log('WARNING: wrong date order');
+                console.log('WARNING: bad date order');
             }
             else {
                 console.log('both entered');
@@ -177,6 +184,20 @@ class Landing extends Component {
         else if (this.state.redirectToNeedLogin) {
             return <Navigate to="/needlogin" />;
         }
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const startOfLastYear = new Date(now.getFullYear() - 1, 0, 1);
+        const endOfLastYear = new Date(now.getFullYear() - 1, 11, 31);
+        // arbitrary date before anyone's strava account would be created
+        const janFirst2000 = new Date(2000, 0, 1);
+        const presets = {
+            'Year-to-date': [startOfYear, now],
+            '3 months': [new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()), now],
+            '6 months': [new Date(now.getFullYear(), now.getMonth() - 6, now.getDate()), now],
+            '12 months': [new Date(now.getFullYear(), now.getMonth() - 12, now.getDate()), now],
+            'Last year': [startOfLastYear, endOfLastYear],
+            'All time': [janFirst2000, now]
+        };
         const { loading, data, startDate, endDate, enterBothWarning, dateOrderWarning } = this.state;
 
         return (
@@ -185,12 +206,22 @@ class Landing extends Component {
                 {loading ? (
                     <div className="spinner-container">
                         <ClipLoader color="#3498db" loading={loading} size={60} />
-                        <p color='#ffffff'>Validating login...</p>
+                        <p style={{color:'#ffffff'}}>Validating login...</p>
                     </div>
                 ) : (
                     <div className='picker-container'>
                         <p>Choose dates to calculate summary statistics. </p>
-                        <p>Enter as MM/DD/YYYY or select from the pickers</p>
+                        <p>Either choose a preset, enter as MM/DD/YYYY or select from the pickers</p>
+                        <p>Presets:</p>
+                        <div className='presets-container'>
+                            {
+                                Object.entries(presets).map(([key, value]) => (
+                                    <Button className='preset' onClick={() => this.setFromPreset(value)} key={key}>
+                                        {key}
+                                    </Button>
+                                ))
+                            }
+                        </div>
                         <p style={{ marginBottom: 5 }}>Start Date:</p>
                         <DatePicker placeholderText='MM/DD/YYYY' selected={startDate} onChange={(date) => this.setStartDate(date)} value={startDate} selectsStart startDate={startDate} endDate={endDate} maxDate={new Date()} />
                         {startDate &&
