@@ -73,7 +73,7 @@ function calculateTotalDistance(activities) {
     return Math.floor(activities.reduce((total, activity) => total + activity.distance, 0) / 1609.34); // Convert meters to miles
 }
 function calculateTotalYards(activities) {
-    return Math.floor(activities.reduce((total, activity) => total + activity.distance, 0) * 1.0936132983); // Convert meters to yards
+    return Math.round(activities.reduce((total, activity) => total + activity.distance, 0) * 1.0936132983); // Convert meters to yards
 }
 function calculateAverageHeartRate(activities) {
     const heartRates = activities.filter(activity => activity.has_heartrate).map(activity => activity.average_heartrate);
