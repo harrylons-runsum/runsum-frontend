@@ -90,7 +90,6 @@ body {
   height: 100%;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 
   & a {
     color: $juniper;
@@ -105,7 +104,17 @@ body {
     padding: 12px;
     font-size: 20px;
     align-items: center;
-
+    .presets-container {
+      
+      display: grid;
+      grid-template-columns: repeat(3, 1fr); /* 2 equal-width columns */
+      
+      .preset {
+        color: $juniper;
+        border: 1px solid $eagle;
+        margin: 10px 10px 0 0;
+      }
+    }
     .logout {
       margin-top: 20px;
       color: $juniper;
