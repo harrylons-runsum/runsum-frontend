@@ -24,8 +24,7 @@ function About(props) {
                     href='https://developers.strava.com/guidelines/' target='_blank' rel='noreferrer'>API brand guidelines</a>.
             </div>
             <div className='about-description'>
-                Check out the <a href='https://www.youtube.com' target='_blank' rel='noreferrer'>Demo Video</a> on YouTube
-                or <a href='/'>try RunSum for yourself!</a>
+                Check out the <a href='https://youtu.be/rnO3OFUTdjI' target='_blank' rel='noreferrer'>Short demo video</a> on YouTube, or the <a href='https://youtu.be/YLZ6cWMYvNA' target='_blank' rel='noreferrer'>full walkthrough & explanation</a>
             </div>
             <Button className='logout' component={Link} to={'/'}>Go back to home</Button>
         </div>
