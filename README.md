@@ -4,11 +4,9 @@ Now publicly available at https://runsum.harrylons.com !
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-To run this project: 
+To run the frontend of this project: 
 
-Configure strava API app: [https://www.strava.com/settings/api](https://www.strava.com/settings/api)
-
-Configure .env accordingly
+Configure .env accordingly (reach out to me for help)
 
 ```npm i```
 
