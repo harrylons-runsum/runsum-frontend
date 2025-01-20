@@ -12,4 +12,6 @@ Configure .env accordingly (reach out to me for help)
 
 ```npm start```
 
+Make sure to run the [Backend](https://github.com/harry-lons/runsum-be-nonorg) simultaneously for full functionality
+
 Reach out to me with any questions!
